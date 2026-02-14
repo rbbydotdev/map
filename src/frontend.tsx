@@ -543,7 +543,7 @@ function MapScreen() {
                                 </span>
                               )}
                               {place.phone && (
-                                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{place.phone}</span>
+                                <a href={`tel:${place.phone}`} className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded hover:bg-blue-200 no-underline">{place.phone}</a>
                               )}
                               {place.website && (
                                 <a
@@ -613,7 +613,6 @@ function App() {
     // gm_authFailure fires whenever Google Maps detects an auth error —
     // either immediately on load (bad key) or later during map usage.
     (window as any).gm_authFailure = () => {
-      localStorage.removeItem(LS_KEY);
       setValidatedKey(null);
       setIsValidating(false);
       setKeyError(
@@ -627,7 +626,6 @@ function App() {
     script.async = true;
 
     script.onerror = () => {
-      localStorage.removeItem(LS_KEY);
       setIsValidating(false);
       setKeyError("Failed to load Google Maps. Check your network connection and API key.");
     };
