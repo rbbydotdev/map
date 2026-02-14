@@ -1,5 +1,9 @@
 # Google Maps Places Finder
 
+## ⚠️ VIBE CODED  : **DO NOT TAKE THE CODE TOO SERIOUSLY**
+
+----
+
 Draw a polygon on a map, search for places within it, build a list, and export to CSV.
 
 **Live demo:** https://mapthing.vercel.app
