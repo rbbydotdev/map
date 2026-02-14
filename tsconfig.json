@@ -2,6 +2,7 @@
   "compilerOptions": {
     // Environment setup & latest features
     "lib": ["ESNext", "DOM"],
+    "types": ["@types/google.maps"],
     "target": "ESNext",
     "module": "Preserve",
     "moduleDetection": "force",
