@@ -133,8 +133,8 @@ function MapScreen() {
         fillOpacity: 0.15,
         strokeColor: "#4285f4",
         strokeWeight: 2,
-        editable: true,
-        draggable: true,
+        editable: false,
+        draggable: false,
       },
     });
 
