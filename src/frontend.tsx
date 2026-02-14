@@ -535,7 +535,7 @@ function MapScreen() {
                             </a>
                           )}
                           <a
-                            href={`https://www.google.com/maps?q=${place.lat},${place.lng}`}
+                            href={place.placeUrl ?? `https://www.google.com/maps?q=${place.lat},${place.lng}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-green-100 text-green-700 px-2 py-0.5 rounded hover:bg-green-200 no-underline inline-flex items-center gap-1"
