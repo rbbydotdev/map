@@ -80,6 +80,8 @@ function MapScreen() {
   const drawingManagerRef = useRef<google.maps.drawing.DrawingManager | null>(null);
   const polygonRef = useRef<google.maps.Polygon | null>(null);
   const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
   const locationInputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -90,6 +92,7 @@ function MapScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   // DEBUG: swap `[]` for `DEBUG_PLACES` (and uncomment the import above) to load fake data
   const [places, setPlaces] = useState<PlaceResult[]>([]);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [statusMessage, setStatusMessage] = useState("Draw a polygon on the map to define your search area");
 
@@ -133,7 +136,7 @@ function MapScreen() {
         fillOpacity: 0.15,
         strokeColor: "#4285f4",
         strokeWeight: 2,
-        editable: false,
+        editable: true,
         draggable: false,
       },
     });
@@ -305,6 +308,14 @@ function MapScreen() {
                 position: { lat: place.lat, lng: place.lng },
                 map: mapInstanceRef.current!,
                 title: place.name,
+              });
+              marker.addListener("click", () => {
+                setSelectedPlaceId(place.id);
+                const card = cardRefs.current.get(place.id);
+                const container = scrollContainerRef.current;
+                if (card && container) {
+                  container.scrollTo({ top: card.offsetTop - container.offsetTop, behavior: "smooth" });
+                }
               });
               markersRef.current.set(place.id, marker);
             });
@@ -479,80 +490,87 @@ function MapScreen() {
                   Download CSV
                 </Button>
               </div>
-              <div className="flex-1 overflow-y-auto px-4 pb-4">
-            <div className="flex flex-col gap-3">
-              {places.map((place) => (
-                  <Card
-                    key={place.id}
-                    className="p-3 gap-0 rounded-lg cursor-default"
-                    onMouseEnter={() => handleCardMouseEnter(place.id)}
-                    onMouseLeave={() => handleCardMouseLeave(place.id)}
-                  >
-                    <div className="flex gap-3">
-                      {place.photoUrl ? (
-                        <img
-                          src={place.photoUrl}
-                          alt={place.name}
-                          className="w-[60px] h-[60px] rounded-lg object-cover shrink-0"
-                        />
-                      ) : (
-                        <div className="w-[60px] h-[60px] rounded-lg bg-gray-200 flex items-center justify-center text-gray-400 text-xs shrink-0">
-                          No image
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0 relative">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          className="absolute top-0 right-0 text-gray-300 hover:text-red-500 hover:bg-red-50 text-lg leading-none"
-                          onClick={() => removePlace(place.id)}
-                          title="Remove"
-                        >
-                          ×
-                        </Button>
-                        <div className="font-semibold text-sm text-gray-800 truncate pr-6 mb-1" title={place.name}>
-                          {place.name}
-                        </div>
-                        <div className="text-xs text-gray-500 truncate mb-1.5" title={place.address}>
-                          {place.address}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 text-xs">
-                          <span className="bg-amber-100 text-amber-700 font-medium px-2 py-0.5 rounded">
-                            {place.searchTerm}
-                          </span>
-                          {place.rating && (
-                            <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                              ★ {place.rating} ({place.userRatingsTotal})
-                            </span>
+              <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 pb-4">
+                <div className="flex flex-col gap-3">
+                  {places.map((place) => (
+                    <div
+                      key={place.id}
+                      ref={(el) => {
+                        if (el) cardRefs.current.set(place.id, el);
+                        else cardRefs.current.delete(place.id);
+                      }}
+                    >
+                      <Card
+                        className={`p-3 gap-0 rounded-lg cursor-default ${selectedPlaceId === place.id ? "border-2 border-blue-500" : ""}`}
+                        onMouseEnter={() => handleCardMouseEnter(place.id)}
+                        onMouseLeave={() => handleCardMouseLeave(place.id)}
+                      >
+                        <div className="flex gap-3">
+                          {place.photoUrl ? (
+                            <img
+                              src={place.photoUrl}
+                              alt={place.name}
+                              className="w-[60px] h-[60px] rounded-lg object-cover shrink-0"
+                            />
+                          ) : (
+                            <div className="w-[60px] h-[60px] rounded-lg bg-gray-200 flex items-center justify-center text-gray-400 text-xs shrink-0">
+                              No image
+                            </div>
                           )}
-                          {place.phone && (
-                            <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{place.phone}</span>
-                          )}
-                          {place.website && (
-                            <a
-                              href={place.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-green-100 text-green-700 px-2 py-0.5 rounded hover:bg-green-200 no-underline"
+                          <div className="flex-1 min-w-0 relative">
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              className="absolute top-0 right-0 text-gray-300 hover:text-red-500 hover:bg-red-50 text-lg leading-none"
+                              onClick={() => removePlace(place.id)}
+                              title="Remove"
                             >
-                              Website
-                            </a>
-                          )}
-                          <a
-                            href={place.placeUrl ?? `https://www.google.com/maps?q=${place.lat},${place.lng}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-green-100 text-green-700 px-2 py-0.5 rounded hover:bg-green-200 no-underline inline-flex items-center gap-1"
-                          >
-                            <MapPin size={10} />
-                            Maps
-                          </a>
+                              ×
+                            </Button>
+                            <div className="font-semibold text-sm text-gray-800 truncate pr-6 mb-1" title={place.name}>
+                              {place.name}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate mb-1.5" title={place.address}>
+                              {place.address}
+                            </div>
+                            <div className="flex flex-wrap gap-1.5 text-xs">
+                              <span className="bg-amber-100 text-amber-700 font-medium px-2 py-0.5 rounded">
+                                {place.searchTerm}
+                              </span>
+                              {place.rating && (
+                                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                  ★ {place.rating} ({place.userRatingsTotal})
+                                </span>
+                              )}
+                              {place.phone && (
+                                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{place.phone}</span>
+                              )}
+                              {place.website && (
+                                <a
+                                  href={place.website}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="bg-green-100 text-green-700 px-2 py-0.5 rounded hover:bg-green-200 no-underline"
+                                >
+                                  Website
+                                </a>
+                              )}
+                              <a
+                                href={place.placeUrl ?? `https://www.google.com/maps?q=${place.lat},${place.lng}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-green-100 text-green-700 px-2 py-0.5 rounded hover:bg-green-200 no-underline inline-flex items-center gap-1"
+                              >
+                                <MapPin size={10} />
+                                Maps
+                              </a>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </Card>
                     </div>
-                  </Card>
-                ))}
-              </div>
+                  ))}
+                </div>
               </div>
             </>
           ) : (
